@@ -1,42 +1,50 @@
 <?php
-  /**
-  * Requires the "PHP Email Form" library
-  * The "PHP Email Form" library is available only in the pro version of the template
-  * The library should be uploaded to: vendor/php-email-form/php-email-form.php
-  * For more info and help: https://bootstrapmade.com/php-email-form/
-  */
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Verificar captcha
+    $recaptcha_url = 'https://www.google.com/recaptcha/api/siteverify';
+    $recaptcha_secret = "6LdmFs8rAAAAACrnuI5Ym3cxLwOr2fqpxiSz0AZ2"; // 👈 tu clave secreta
+    $recaptcha_response = $_POST['recaptcha_response'];
 
-  // Replace contact@example.com with your real receiving email address
-  $receiving_email_address = 'enzo100amarilla@gmail.com';
+    // Hacer la petición a Google
+    $response = file_get_contents($recaptcha_url . '?secret=' . $recaptcha_secret . '&response=' . $recaptcha_response);
+    $responseKeys = json_decode($response, true);
 
-  if( file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php' )) {
-    include( $php_email_form );
-  } else {
-    die( 'Unable to load the "PHP Email Form" Library!');
-  }
+    if(!$responseKeys["success"] || $responseKeys["score"] < 0.5){
+        echo "error: Captcha inválido. Intente de nuevo.";
+        exit;
+    }
 
-  $contact = new PHP_Email_Form;
-  $contact->ajax = true;
-  
-  $contact->to = $receiving_email_address;
-  $contact->from_name = $_POST['name'];
-  $contact->from_email = $_POST['email'];
-  $contact->subject = $_POST['subject'];
+    $name    = htmlspecialchars($_POST['name']);
+    $email   = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+    $subject = htmlspecialchars($_POST['subject']);
+    $message = nl2br(htmlspecialchars($_POST['message']));
 
-  // Uncomment below code if you want to use SMTP to send emails. You need to enter your correct SMTP credentials
-  /*
-  $contact->smtp = array(
-    'host' => 'example.com',
-    'username' => 'example',
-    'password' => 'pass',
-    'port' => '587'
-  );
-  */
+    if (!$email) {
+        echo "error: Email inválido";
+        exit;
+    }
 
-  $contact->add_message( $_POST['name'], 'From');
-  $contact->add_message( $_POST['email'], 'Email');
-  isset($_POST['phone']) && $contact->add_message($_POST['phone'], 'Phone');
-  $contact->add_message( $_POST['message'], 'Message', 10);
+    $to = "enzo100amarilla@gmail.com"; 
+    $subjectMail = "Asunto: $subject";
 
-  echo $contact->send();
+    $body = "
+        <h3>Nuevo mensaje desde la web</h3>
+        <p><strong>Nombre:</strong> $name</p>
+        <p><strong>Email:</strong> $email</p>
+        <p><strong>Mensaje:</strong><br>$message</p>
+    ";
+
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=utf-8\r\n";
+    $headers .= "From: $email\r\n";
+    $headers .= "Reply-To: $email\r\n";
+
+    if (mail($to, $subjectMail, $body, $headers)) {
+        echo "OK"; // 👈 el JS busca esto
+    } else {
+        echo "error: No se pudo enviar el mensaje.";
+    }
+} else {
+    echo "error: Método no permitido";
+}
 ?>

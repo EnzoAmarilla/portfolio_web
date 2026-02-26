@@ -437,7 +437,7 @@ h6 {
 .scroll-top.active {
   visibility: visible;
   opacity: 1;
-  bottom: 15px;
+  bottom: 5.5rem;
 }
 
 /*--------------------------------------------------------------
@@ -737,6 +737,7 @@ section,
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: bottom;
   border-radius: 30px;
   z-index: 2;
 }
