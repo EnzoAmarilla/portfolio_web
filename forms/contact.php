@@ -40,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->SMTPAuth = true;
         // 👇 REEMPLAZA ESTOS DATOS CON TUS CREDENCIALES DE HOSTINGER
         $mail->Username = 'contacto@enzoamarilla.dev';      // Tu correo creado en Hostinger
-        $mail->Password = 'TU_CONTRASEÑA_DE_HOSTINGER';    // Tu contraseña de ese correo
+        $mail->Password = 'RnCfe@[2';    // Tu contraseña de ese correo
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;      // SSL
         $mail->Port = 465;                              // Puerto para SSL
 
