@@ -1,14 +1,19 @@
 <?php
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Dotenv\Dotenv;
 
 // Carga del autoloader de Composer
 require __DIR__ . '/../vendor/autoload.php';
 
+// Cargar variables de entorno desde el archivo .env
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->safeLoad();
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 1. Verificar Captcha
     $recaptcha_url = 'https://www.google.com/recaptcha/api/siteverify';
-    $recaptcha_secret = "6LezCHosAAAAAMqFQiUQIhThPnBckk1N8d3QeBOY";
+    $recaptcha_secret = $_ENV['RECAPTCHA_SECRET'] ?? '';
     $recaptcha_response = $_POST['recaptcha_response'] ?? '';
 
     $response = file_get_contents($recaptcha_url . '?secret=' . $recaptcha_secret . '&response=' . $recaptcha_response);
@@ -34,22 +39,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $mail = new PHPMailer(true);
 
     try {
-        // --- CONFIGURACIÓN SMTP (HOSTINGER) ---
+        // --- CONFIGURACIÓN SMTP ---
         $mail->isSMTP();
-        $mail->Host = 'smtp.hostinger.com';             // Servidor SMTP de Hostinger
+        $mail->Host = $_ENV['SMTP_HOST'] ?? 'smtp.hostinger.com';
         $mail->SMTPAuth = true;
-        // 👇 REEMPLAZA ESTOS DATOS CON TUS CREDENCIALES DE HOSTINGER
-        $mail->Username = 'contacto@enzoamarilla.dev';      // Tu correo creado en Hostinger
-        $mail->Password = 'RnCfe@[2';    // Tu contraseña de ese correo
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;      // SSL
-        $mail->Port = 465;                              // Puerto para SSL
+        $mail->Username = $_ENV['SMTP_USER'] ?? '';
+        $mail->Password = $_ENV['SMTP_PASS'] ?? '';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port = $_ENV['SMTP_PORT'] ?? 465;
 
         // --- DESTINATARIOS ---
-        // Importante: El 'setFrom' debe ser tu correo de Hostinger para evitar spam
-        $mail->setFrom('contacto@enzoamarilla.dev', 'Web Portfolio - ' . $name);
-        $mail->addAddress('enzo100amarilla@gmail.com');       // Tu Gmail principal
+        $fromEmail = $_ENV['SMTP_FROM_EMAIL'] ?? 'contacto@enzoamarilla.dev';
+        $fromName = $_ENV['SMTP_FROM_NAME'] ?? 'Web Portfolio';
 
-        // Esto permite que cuando le des a "Responder" en Gmail, le respondas al cliente
+        $mail->setFrom($fromEmail, $fromName . ' - ' . $name);
+        $mail->addAddress($_ENV['SMTP_TO_EMAIL'] ?? 'enzo100amarilla@gmail.com');
+
         $mail->addReplyTo($email, $name);
 
         // --- CONTENIDO DEL MAIL ---
@@ -69,11 +74,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->AltBody = "Nombre: $name\nEmail: $email\nAsunto: $subject\nMensaje: $message";
 
         $mail->send();
-        echo "OK"; // El JS de tu web busca este string para confirmar éxito
+        echo "OK";
 
     } catch (Exception $e) {
-        // En producción podrías querer un mensaje más genérico, pero esto ayuda a debuguear
-        echo "error: No se pudo enviar el correo. Mailer Error: {$mail->ErrorInfo}";
+        echo "error: No se pudo enviar el correo.";
     }
 } else {
     echo "error: Método no permitido";
